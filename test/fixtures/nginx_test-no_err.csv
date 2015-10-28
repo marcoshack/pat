@@ -1,0 +1,2 @@
+log_file,source_ip,username,date,timestamp,host,request_line,status_code,service_time,upstream_service_time
+access-1.log-20151010,10.134.101.125,-,2015-10-09T00:01:10-03:00,1444359670,10.134.101.3,HEAD /example/foo HTTP/1.1,200,0.045,0.045

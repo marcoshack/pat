@@ -1,0 +1,2 @@
+SFrame==1.6
+matplotlib==1.4.3
