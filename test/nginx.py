@@ -12,7 +12,7 @@ class TestNginxMethods(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.reqs = nginx.load_access_log_data('test/fixtures/nginx_test', save_binary=False)
+        cls.reqs = nginx.load_access_log_data('test/fixtures/nginx_test.csv', save_binary=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -49,7 +49,7 @@ class TestNginxMethods(unittest.TestCase):
         self.assertEquals(err_by_host[0]['err_pct'], 100.0)
 
     def test_errors_by_host_with_no_errors(self):
-        no_err_reqs = nginx.load_access_log_data('test/fixtures/nginx_test-no_err', save_binary=False)
+        no_err_reqs = nginx.load_access_log_data('test/fixtures/nginx_test-no_err.csv', save_binary=False)
         err_by_host = nginx.errors_by_host(no_err_reqs)
         self.assertEquals(err_by_host[0]['err_pct'], 0)
 
@@ -59,7 +59,7 @@ class TestNginxMethods(unittest.TestCase):
         self.assertEquals(len(periods), 0)
 
     def test_find_load_periods_with_loads(self):
-        reqs = nginx.load_access_log_data('test/fixtures/nginx_test-with_loads', save_binary=False)
+        reqs = nginx.load_access_log_data('test/fixtures/nginx_test-with_loads.csv', save_binary=False)
         reqs, rps = nginx.summary(reqs)
         periods = nginx.find_load_periods(rps, surrounding_period=5, rps_threashold=20, load_pause_period=5)
         self.assertEquals(len(periods), 2)

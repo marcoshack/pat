@@ -11,11 +11,10 @@ import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
-def load_access_log_data(base_filename=None, force=False, save_binary=True):
-    """ Load access log data from a sframe.SFrame binary with name <base_filename>.gl - if exists - or from a CSV file named <base_filename>.csv and than save to a SFrame binary format.
+def load_access_log_data(csv_filename, force=False, save_binary=True):
+    """ Load access log data from a sframe.SFrame binary with name <csv_filename>.gl - if exists - or from a CSV file named <csv_filename>.csv and than save to a SFrame binary format.
     """
-    gl_filename = '%s.gl' % base_filename
-    csv_filename = '%s.csv' % base_filename
+    gl_filename = '%s.gl' % csv_filename
 
     if os.path.isdir(gl_filename):
         if not force:
@@ -94,7 +93,7 @@ def fill_rps_holes(rps_aggr):
             })
     return rps_aggr.append(new_items).sort('timestamp')
 
-def summary(requests, start=None, period=None, stats=True):
+def filter(requests, start=None, period=None, stats=True):
     """ Filter requests for the given start+period (or return the same list if None), creates an RPS from requests and return both, displaying statistics about the requests and RPS lists (unless stats=False is given).
     """
     reqs = requests
@@ -105,6 +104,9 @@ def summary(requests, start=None, period=None, stats=True):
     rps_full = fill_rps_holes(rps)
     if stats: show_stats(reqs, rps_full)
     return reqs, rps_full
+
+def summary(requests, start=None, period=None, stats=True):
+    return filter(requests, start, period, stats)
 
 def show_stats(reqs, rps):
     """ Show handy information about the request list and RPS aggregate.
