@@ -1,24 +1,28 @@
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__file__)
+
 import unittest
 import shutil
 import os.path
+import glob
 import pat.nginx as nginx
 
 class TestNginxMethods(unittest.TestCase):
 
-    def tearDown(self):
-        if os.path.isdir('test/fixtures/nginx_test.gl'): shutil.rmtree('test/fixtures/nginx_test.gl')
-        if os.path.isdir('test/fixtures/nginx_test-no_err.gl'): shutil.rmtree('test/fixtures/nginx_test-no_err.gl')
-        if os.path.isdir('test/fixtures/nginx_test-with_loads.gl'): shutil.rmtree('test/fixtures/nginx_test-with_loads.gl')
+    @classmethod
+    def setUpClass(cls):
+        cls.reqs = nginx.load_access_log_data('test/fixtures/nginx_test', save_binary=False)
 
-    def setUp(self):
-        self.reqs = nginx.load_access_log_data('test/fixtures/nginx_test', force=True)
-        self.expected_count     = 100
-        self.expected_successes = 96
-        self.expected_errors    = 4
-        self.expected_rps_len   = 41
+    @classmethod
+    def tearDownClass(cls):
+        # just in case someone forget to use load_access_log_data(..., save_binary=False)
+        for path in glob.glob('test/fixtures/*.gl'):
+            logger.info('Removing directory %s', path)
+            shutil.rmtree(path)
 
     def test_all_lines_are_loaded(self):
-        self.assertEqual(len(self.reqs), self.expected_count)
+        self.assertEqual(len(self.reqs), 100)
 
     def test_data_is_enriched(self):
         req = self.reqs[0]
@@ -31,21 +35,21 @@ class TestNginxMethods(unittest.TestCase):
 
     def test_aggregate_rps(self):
         rps = nginx.aggregate_rps(self.reqs)
-        self.assertEquals(rps['count'].sum(), self.expected_count)
-        self.assertEquals(rps['successes'].sum(), self.expected_successes)
-        self.assertEquals(rps['errors'].sum(), self.expected_errors)
+        self.assertEquals(rps['count'].sum(), 100)
+        self.assertEquals(rps['successes'].sum(), 96)
+        self.assertEquals(rps['errors'].sum(), 4)
 
     def test_summary_with_no_start_date_and_period(self):
         reqs, rps = nginx.summary(self.reqs, stats=False)
         self.assertEquals(len(reqs), len(self.reqs))
-        self.assertEquals(len(rps), self.expected_rps_len)
+        self.assertEquals(len(rps), 41)
 
     def test_errors_by_host(self):
         err_by_host = nginx.errors_by_host(self.reqs)
         self.assertEquals(err_by_host[0]['err_pct'], 100.0)
 
     def test_errors_by_host_with_no_errors(self):
-        no_err_reqs = nginx.load_access_log_data('test/fixtures/nginx_test-no_err', force=True)
+        no_err_reqs = nginx.load_access_log_data('test/fixtures/nginx_test-no_err', save_binary=False)
         err_by_host = nginx.errors_by_host(no_err_reqs)
         self.assertEquals(err_by_host[0]['err_pct'], 0)
 
@@ -55,7 +59,7 @@ class TestNginxMethods(unittest.TestCase):
         self.assertEquals(len(periods), 0)
 
     def test_find_load_periods_with_loads(self):
-        reqs = nginx.load_access_log_data('test/fixtures/nginx_test-with_loads')
+        reqs = nginx.load_access_log_data('test/fixtures/nginx_test-with_loads', save_binary=False)
         reqs, rps = nginx.summary(reqs)
         periods = nginx.find_load_periods(rps, surrounding_period=5, rps_threashold=20, load_pause_period=5)
         self.assertEquals(len(periods), 2)
